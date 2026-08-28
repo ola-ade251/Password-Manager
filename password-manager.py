@@ -2,6 +2,8 @@ import getpass
 from crypto import encrypt_pw, decrypt_pw
 import json
 import os
+import random
+import string
 
 
 password_file = "passwords.json"
@@ -26,7 +28,7 @@ def main():     #menu screen
             print("exiting")
             break
         else:
-            print("invalid input: choose from either 1, 2 or 3")
+            print("invalid input: choose from either 1, 2, 3, 4 or 5")
         
 
 def create_account():
@@ -34,7 +36,12 @@ def create_account():
     if username in managed_passwords:
         print("username already exists, create another.")
         return
-    password = getpass.getpass("create password")
+    choice = input("1 to create ur own, 2 to generate")
+    if choice == "2":
+        password = generate_pw()
+        print(f"generated passord: {password}")
+    else:
+        password = getpass.getpass("create password")
     encrypted = encrypt_pw(password)
     managed_passwords[username] = encrypted
     save_passwords()
@@ -81,6 +88,11 @@ def del_account():
     else:
         print("username not found")
         return
+
+def generate_pw(length=12):
+    chars = string.ascii_letters + string.punctuation + string.digits 
+    password = "".join(random.choice(chars) for _ in range(length))
+    return password
 
 
 main()
