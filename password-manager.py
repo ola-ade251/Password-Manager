@@ -13,7 +13,7 @@ def main():     #menu screen
     global managed_passwords
     managed_passwords = load_passwords()
     while True:
-        choice = input("type 1 for create account, 2 for login 3 to view pws and 4 to exit")
+        choice = input("type 1,2,3, 4 or 5")
         if choice == "1":
             create_account()
         elif choice == "2":
@@ -21,6 +21,8 @@ def main():     #menu screen
         elif choice == "3":
             view_pws()
         elif choice == "4":
+            del_account()
+        elif choice == "5":
             print("exiting")
             break
         else:
@@ -67,6 +69,18 @@ def load_passwords():
             return json.load(f)
     else:
         return {}
+
+def del_account():
+    username = input("enter username to delete: ")
+    
+    if username in managed_passwords:
+        del managed_passwords[username]
+        save_passwords()
+        print(f"account '{username}' successfully deleted")
+        return
+    else:
+        print("username not found")
+        return
 
 
 main()
