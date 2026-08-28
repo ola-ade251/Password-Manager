@@ -1,5 +1,5 @@
-import hashlib
 import getpass
+from crypto import encrypt_pw, decrypt_pw
 
 
 managed_passwords ={}
@@ -20,9 +20,6 @@ def main():     #menu screen
         else:
             print("invalid input: choose from either 1, 2 or 3")
         
-def hash(password):
-    hashed_password = hashlib.sha256(password.encode()).hexdigest() #store all hashed passwords in managed passwords
-    return hashed_password
 
 def create_account():
     username = input("create username")
@@ -30,8 +27,8 @@ def create_account():
         print("username already exists, create another.")
         return
     password = getpass.getpass("create password")
-    hashed_pw = hash(password)
-    managed_passwords[username] = hashed_pw
+    encrypted = encrypt_pw(password)
+    managed_passwords[username] = encrypted
     print("account created!")
 
 def login():
@@ -40,10 +37,17 @@ def login():
         print("username not found")
         return
     password = getpass.getpass("enter password")
-    hashed_pw = hash(password)
-    if managed_passwords[username] == hashed_pw:       # if username and password match to the hash, successful
+    stored_encrypted = managed_passwords[username]
+    stored_original = decrypt_pw(stored_encrypted)
+    if password == stored_original:      # if username and password match to the hash, successful
         print("login successful!")
     else:
         print("login failed")
+
+def view_pws():
+    print("\nstored passwords:")
+    for user, encrypted in managed_passwords.items():       # loop through every username and its encrypted pw
+        original_pw = decrypt_pw(encrypted)
+        print(f"{user}: {original_pw}")
 
 main()
