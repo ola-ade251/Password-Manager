@@ -1,20 +1,26 @@
 import getpass
 from crypto import encrypt_pw, decrypt_pw
+import json
+import os
 
 
+password_file = "passwords.json"
 managed_passwords ={}
 #"username1": "password1"
 #"username2": "password2"
 
 def main():     #menu screen
-    
+    global managed_passwords
+    managed_passwords = load_passwords()
     while True:
-        choice = input("type1 for create account, 2 for login and 3 to exit")
+        choice = input("type 1 for create account, 2 for login 3 to view pws and 4 to exit")
         if choice == "1":
             create_account()
         elif choice == "2":
             login()
         elif choice == "3":
+            view_pws()
+        elif choice == "4":
             print("exiting")
             break
         else:
@@ -29,6 +35,7 @@ def create_account():
     password = getpass.getpass("create password")
     encrypted = encrypt_pw(password)
     managed_passwords[username] = encrypted
+    save_passwords()
     print("account created!")
 
 def login():
@@ -49,5 +56,17 @@ def view_pws():
     for user, encrypted in managed_passwords.items():       # loop through every username and its encrypted pw
         original_pw = decrypt_pw(encrypted)
         print(f"{user}: {original_pw}")
+
+def save_passwords():
+    with open(password_file, "w") as f:
+        json.dump(managed_passwords, f)         #store the encrypted passwords(as strings)
+
+def load_passwords():
+    if os.path.exists(password_file):
+        with open(password_file, "r") as f:
+            return json.load(f)
+    else:
+        return {}
+
 
 main()
