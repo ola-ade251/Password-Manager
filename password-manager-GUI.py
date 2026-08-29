@@ -29,18 +29,83 @@ def generate_pw(length=12):
     password = "".join(random.choice(chars) for _ in range(length))
     return password
 
+
+
 # GUI functions
-#def create_password_gui():
-#def login_gui():
-#def delete_gui():
-#def generate_pw_gui():
-#def view_gui():
+
+def create_account_gui():
+    username = create_username_entry.get()
+    password = create_password_entry.get()
+
+    if username in managed_passwords:
+        messagebox.showerror("Error", "Username already exists, make another one.")
+        return
+    if password.strip() == "":
+        messagebox.showerror("Error", "Password cant be empty.")
+        return
+
+    encrypted = encrypt_pw(password)
+    managed_passwords[username] = encrypted
+    save_passwords()
+
+    messagebox.showinfo("success", "Account created")
+    create_username_entry.delete(0, tk.END)
+    create_password_entry.delete(0, tk.END)
+
+
+def login_gui():
+    username = login_username_entry.get()
+    password = login_password_entry.get()
+
+    if username not in managed_passwords:
+        messagebox.showerror("Error", "username not found")
+        return
+    stored_encrypted = managed_passwords[username]
+    stored_original = decrypt_pw(stored_encrypted)
+
+    if password == stored_original:
+        messagebox.showinfo("Success", "login successful")
+    else:
+        messagebox.showerror("Error", "login failed")
+
+
+def delete_gui():
+    username = delete_username_entry.get()
+    if username not in managed_passwords:
+        messagebox.showerror("Error", "username not found")
+        return
+        
+    confirm = messagebox.askyesno("Confirm", f"Delete account '{username}'?")
+    if confirm:
+        del managed_passwords[username]
+        save_passwords()
+        messagebox.showinfo("Success", "account deleted")
+
+
+
+def generate_pw_gui():
+    pw= generate_pw()
+    messagebox.showinfo("generated password", pw)
+    create_password_entry.delete(0, tk.END)
+    create_password_entry.insert(0, pw)
+
+    
+def view_gui():
+    view_text.delete("1.0", tk.END)
+    for user, encrypted in managed_passwords.items():
+        original = decrypt_pw(encrypted)
+        view_text.insert(tk.END, f"{user}: {original}\n")
+
+
+
 
 # GUI setup
 
 root = tk.Tk()
 root.title("Password Manager")
 root.geometry("800x500")
+
+managed_passwords = load_passwords()
 
 #frames
 home_frame = tk.Frame(root)
@@ -64,7 +129,7 @@ view_btn= tk.Button(home_frame, text="View Passwords", command= lambda: view_fra
 view_btn.pack(padx=20, pady=20)
 del_btn= tk.Button(home_frame, text="Delete Account", command= lambda: del_frame.tkraise())
 del_btn.pack(padx=20, pady=20)
-generate_btn= tk.Button(home_frame, text="Generate Password" )  #command= generate_pw_gui
+generate_btn= tk.Button(home_frame, text="Generate Password", command= generate_pw_gui )  
 generate_btn.pack(padx=20, pady=20)
 
 
@@ -77,13 +142,13 @@ user_label.pack()
 create_username_entry = tk.Entry(create_frame)
 create_username_entry.pack()
 
-user_label=tk.Label(create_frame, text= "passowrd")
+user_label=tk.Label(create_frame, text= "password")
 user_label.pack()
 create_password_entry = tk.Entry(create_frame)
 create_password_entry.pack()
 
-tk.Button(create_frame, text="Generate Password").pack(padx=10, pady=10)#command=generate_pw_gui
-tk.Button(create_frame, text="Save Account").pack(padx=10, pady=10)#command=create_account_gui
+tk.Button(create_frame, text="Generate Password", command=generate_pw_gui).pack(padx=10, pady=10)
+tk.Button(create_frame, text="Save Account", command=create_account_gui).pack(padx=10, pady=10)
 tk.Button(create_frame, text="Back", command=lambda: home_frame.tkraise()).pack(padx=10, pady=10)
 
 
@@ -93,15 +158,15 @@ l_label.pack(padx=20, pady=20)
 
 user_label=tk.Label(login_frame, text= "username")
 user_label.pack()
-create_username_entry = tk.Entry(login_frame)
-create_username_entry.pack()
+login_username_entry = tk.Entry(login_frame)
+login_username_entry.pack()
 
-user_label=tk.Label(login_frame, text= "passowrd")
+user_label=tk.Label(login_frame, text= "password")
 user_label.pack()
 login_password_entry = tk.Entry(login_frame)
 login_password_entry.pack()
 
-tk.Button(login_frame, text="Login").pack(padx=10, pady=10)#command=login_gui
+tk.Button(login_frame, text="Login", command=login_gui).pack(padx=10, pady=10)
 tk.Button(login_frame, text="Back", command=lambda: home_frame.tkraise()).pack(padx=10, pady=10)
 
 
@@ -109,7 +174,10 @@ tk.Button(login_frame, text="Back", command=lambda: home_frame.tkraise()).pack(p
 v_label = tk.Label(view_frame, text = "Stored Passwords", font = ('Arial', 18))
 v_label.pack(padx=20, pady=20)
 
-tk.Button(view_frame, text="Refresh").pack(padx=10, pady=10)#command=view_gui
+view_text = tk.Text(view_frame, height = 15, width=50)
+view_text.pack(padx=20, pady=20)
+
+tk.Button(view_frame, text="Refresh", command=view_gui).pack(padx=10, pady=10)
 tk.Button(view_frame, text="Back", command=lambda: home_frame.tkraise()).pack(padx=10, pady=10)
 
 
@@ -122,7 +190,7 @@ d_label.pack()
 delete_username_entry = tk.Entry(del_frame)
 delete_username_entry.pack()
 
-tk.Button(del_frame, text="Delete").pack(padx=10, pady=10)#command=delete_gui
+tk.Button(del_frame, text="Delete", command=delete_gui).pack(padx=10, pady=10)
 tk.Button(del_frame, text="Back", command=lambda: home_frame.tkraise()).pack(padx=10, pady=10)
 
 
