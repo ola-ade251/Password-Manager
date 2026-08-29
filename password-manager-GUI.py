@@ -8,6 +8,7 @@ import tkinter as tk
 from tkinter import messagebox
 
 password_file = "passwords.json"
+master_file = "master.key"
 managed_passwords = {}
 
 
@@ -28,6 +29,17 @@ def generate_pw(length=12):
     chars = string.ascii_letters + string.punctuation + string.digits 
     password = "".join(random.choice(chars) for _ in range(length))
     return password
+
+def save_master_pw(master_pw):
+    encrypted = encrypt_pw(master_pw)
+    with open(master_file, "wb") as f:
+        f.write(encrypted.encode())
+
+def load_master_pw():
+    if os.path.exists(master_file):
+        with open(master_file, "rb") as f:
+            return f.read()
+    return None
 
 
 
@@ -81,6 +93,8 @@ def delete_gui():
         save_passwords()
         messagebox.showinfo("Success", "account deleted")
 
+    delete_username_entry.delete(0, tk.END)
+
 
 
 def generate_pw_gui():
@@ -105,6 +119,8 @@ root = tk.Tk()
 root.title("Password Manager")
 root.geometry("800x500")
 
+encrypted_master = load_master_pw()             #create master pw page on first time setup
+
 managed_passwords = load_passwords()
 
 #frames
@@ -114,7 +130,10 @@ login_frame = tk.Frame(root)
 view_frame = tk.Frame(root)
 del_frame = tk.Frame(root)
 
-for frame in (home_frame, create_frame, login_frame, view_frame, del_frame):
+master_create_frame = tk.Frame(root)
+master_login_frame = tk.Frame(root)
+
+for frame in (home_frame, create_frame, login_frame, view_frame, del_frame, master_create_frame, master_login_frame):
     frame.grid(row =0, column =0, sticky= "nsew")
 
 # home page
@@ -194,6 +213,47 @@ tk.Button(del_frame, text="Delete", command=delete_gui).pack(padx=10, pady=10)
 tk.Button(del_frame, text="Back", command=lambda: home_frame.tkraise()).pack(padx=10, pady=10)
 
 
+#set master password page
+tk.Label(master_create_frame, text= "Create Master Password", font = ('Arial', 18)).pack(padx=20, pady=20)
 
-home_frame.tkraise()        #  start with home page
+new_master_entry = tk.Entry(master_create_frame, show= "*")
+new_master_entry.pack(padx=10, pady=10)
+
+def set_master():
+    pw = new_master_entry.get().strip()
+    if pw == "":
+        messagebox.showerror("Error", "Master password cant be empty")
+        return
+    save_master_pw(pw)
+    messagebox.showinfo("success", "Master Password created")
+    master_login_frame.tkraise()
+
+tk.Button(master_create_frame, text = "Save", command=set_master).pack(padx=20, pady=20)
+
+
+#enter master password page
+tk.Label(master_login_frame, text= "Enter Master Password", font = ('Arial', 18)).pack(padx=20, pady=20)
+
+master_entry = tk.Entry(master_login_frame, show= "*")
+master_entry.pack(padx=10, pady=10)
+
+def check_master():
+    entered = master_entry.get()
+    encrypted_master = load_master_pw()
+    encrypted_master = encrypted_master.decode()
+    stored_master = decrypt_pw(encrypted_master)
+    if entered == stored_master:
+        home_frame.tkraise()
+    else:
+        messagebox.showerror("Error", "Incorrect Master password")
+
+tk.Button(master_login_frame, text = "Unlock", command=check_master).pack(padx=20, pady=20)
+
+
+
+if encrypted_master is None:
+    master_create_frame.tkraise()
+else:
+    master_login_frame.tkraise()
+
 root.mainloop()
